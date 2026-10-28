@@ -8,3 +8,5 @@ User-agent: GPTBot
 Allow: /
 
 Sitemap: https://napoles.mcmv-rs.com.br/sitemap.xml
+
+Agentmap: https://napoles.mcmv-rs.com.br/.well-known/ard.json

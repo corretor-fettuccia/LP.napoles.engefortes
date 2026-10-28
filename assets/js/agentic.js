@@ -51,7 +51,22 @@
       });
     } catch (error) { console.warn('[Imobify WebMCP] Registro indisponível:', error); }
   }
+  function enhanceDynamicForms() {
+    document.querySelectorAll('form').forEach((form) => {
+      // Prefer existing accessible names; avoid injecting visual labels.
+      Array.from(form.querySelectorAll('input, select, textarea')).forEach((field) => {
+        if (field.type === 'hidden' || field.type === 'submit' || field.type === 'button') return;
+        if (!field.id && field.name) field.id = 'agent-field-' + field.name.replace(/[^a-zA-Z0-9_-]/g, '-');
+        if (!field.getAttribute('aria-label') && !field.getAttribute('aria-labelledby') && !field.labels?.length) {
+          const accessible = field.getAttribute('toolparamdescription') || field.placeholder || field.name;
+          if (accessible) field.setAttribute('aria-label', accessible);
+        }
+        if (!field.name && field.id) field.setAttribute('name', field.id);
+      });
+    });
+  }
   const start = () => {
+    enhanceDynamicForms();
     annotateForms();
     registerInformationTool();
     if (typeof MutationObserver !== 'undefined') {
@@ -59,7 +74,7 @@
       const observer = new MutationObserver(() => {
         if (scheduled) return;
         scheduled = true;
-        requestAnimationFrame(() => { scheduled = false; annotateForms(); });
+        requestAnimationFrame(() => { scheduled = false; enhanceDynamicForms(); annotateForms(); });
       });
       observer.observe(document.body, {subtree:true, childList:true});
     }

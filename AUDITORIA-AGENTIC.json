@@ -1,0 +1,7 @@
+{
+  "duplicate_ids": [],
+  "unnamed_static_buttons": [],
+  "links_to_missing_fragments": [],
+  "json_manifests_valid": true,
+  "note": "Auditoria estrutural estática. Lighthouse e WebMCP requerem uma execução real com Chrome e deploy para comprovar aprovação."
+}
