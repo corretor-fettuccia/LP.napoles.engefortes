@@ -1234,240 +1234,6 @@
 (function(){document.querySelectorAll('[data-plugin="faq"] details').forEach(item=>item.addEventListener('toggle',()=>{if(item.open)window.Imobify&&Imobify.track('faq_open',{question:item.querySelector('summary').textContent.replace('+','').trim()});}));})();
 
 
-/* IMOBIFY Financeiro — versão 1.0.0: módulo reutilizável, sem telemetria ou envios paralelos. */
-(function(){'use strict';if(window.ImobifyFinancialFlow)return;
-function parse(config){var raw=config.financialQuestions||'';try{var v=JSON.parse(raw);if(Array.isArray(v))return v.filter(function(q){return q&&q.id&&q.label}).slice(0,30)}catch(e){console.warn('[Imobify financeiro] Configuração inválida; revise o JSON.',e)}return []}
-function isEnabled(config){return ['true','1','on'].includes(String(config.financialEnabled))}
-function launch(config){return new Promise(function(resolve){var questions=parse(config);if(!isEnabled(config)||!questions.length){resolve([]);return}
- var cover=document.createElement('div');cover.className='imobify-finance-overlay';cover.setAttribute('role','presentation');
- var card=document.createElement('section');card.className='imobify-finance-dialog';card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','Condições financeiras');card.tabIndex=-1;
- var title=document.createElement('h2');title.textContent=config.financialTitle||'Para entender suas condições';var desc=document.createElement('p');desc.textContent=config.financialCopy||'Algumas respostas ajudam a personalizar o atendimento.';
- var form=document.createElement('form');form.noValidate=true;form.className='imobify-finance-form';var items=document.createElement('div');items.className='imobify-finance-items';var status=document.createElement('p');status.className='imobify-finance-status';status.setAttribute('role','alert');var submit=document.createElement('button');submit.type='submit';submit.textContent='Enviar';submit.className='imobify-design-cta imobify-finance-submit';submit.setAttribute('data-design-role','cta');
- form.append(items,status,submit);card.append(title,desc,form);cover.append(card);document.body.append(cover);
- var focusBefore=document.activeElement,answers={};function visible(q){if(!q.showIf)return true;var parent=answers[q.showIf.id];if(Array.isArray(parent))return parent.includes(q.showIf.equals);return String(parent||'')===String(q.showIf.equals)}
- function setAnswer(id,v){answers[id]=v;questions.forEach(function(q){if(!visible(q))delete answers[q.id]});render()}
- function render(){items.replaceChildren();questions.forEach(function(q){if(!visible(q))return;var field=document.createElement('fieldset');var legend=document.createElement('legend');legend.textContent=q.label+(q.required?' *':'');field.append(legend);var type=q.type||'yesno';if(type==='date'||type==='text'||type==='number'){var inp=document.createElement('input');inp.type=type;inp.value=answers[q.id]||'';if(type==='date'){inp.max=new Date().toISOString().slice(0,10)}inp.addEventListener('change',function(){setAnswer(q.id,inp.value)});field.append(inp)}else{var opts=type==='yesno'?['Sim','Não']:Array.isArray(q.options)?q.options:[];var group=document.createElement('div');group.className='imobify-finance-options';opts.forEach(function(option){var label=document.createElement('label'),inp=document.createElement('input');inp.type=type==='multiple'?'checkbox':'radio';inp.name='finance_'+q.id;inp.value=option;inp.checked=type==='multiple'?Array.isArray(answers[q.id])&&answers[q.id].includes(option):answers[q.id]===option;inp.addEventListener('change',function(){if(type==='multiple'){var arr=Array.isArray(answers[q.id])?answers[q.id].slice():[];arr=inp.checked?[...arr,option]:arr.filter(function(x){return x!==option});setAnswer(q.id,arr)}else setAnswer(q.id,option)});label.append(inp,document.createTextNode(option));group.append(label)});field.append(group)}items.append(field)});status.textContent=''}
- function finish(){var missing=questions.find(function(q){return visible(q)&&q.required&&(!answers[q.id]||(Array.isArray(answers[q.id])&&!answers[q.id].length))});if(missing){status.textContent='Responda: '+missing.label;return}var result=questions.filter(function(q){return visible(q)&&answers[q.id]!==undefined&&answers[q.id]!==''}).map(function(q){return {id:q.id,label:q.label,answer:Array.isArray(answers[q.id])?answers[q.id].join(' | '):String(answers[q.id])}});cover.remove();if(focusBefore&&focusBefore.isConnected)focusBefore.focus();resolve(result)}
- form.addEventListener('submit',function(e){e.preventDefault();finish()});cover.addEventListener('keydown',function(e){if(e.key==='Tab'){var elements=Array.from(cover.querySelectorAll('input,button')).filter(function(el){return el.getClientRects().length});if(!elements.length)return;var first=elements[0],last=elements[elements.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});render();card.focus();
- })}
-function addToForm(form,results){if(!form||!results||!results.length)return;var text=results.map(function(r){return r.label+': '+r.answer}).join('\n');var hidden=form.querySelector('[name="condicoesFinanceiras"]');if(!hidden){hidden=document.createElement('input');hidden.type='hidden';hidden.name='condicoesFinanceiras';form.append(hidden)}hidden.value=text;var msg=form.querySelector('[name="msg"]');if(msg)msg.value=[msg.value,'Condições financeiras:',text].filter(Boolean).join('\n\n')}
-window.ImobifyFinancialFlow={launch:launch,addToForm:addToForm,isEnabled:isEnabled};})();
-
-
-/* Agendamento Sender 1.3.0 — FormSender v4 POST contract */
-(function(){
-  'use strict';
-function configureFixedBackgrounds(){document.querySelectorAll('.ags-section[data-fixed-background="true"]').forEach(function(el){var url=el.dataset.backgroundImage||'';if(/^https:\/\//i.test(url)){el.style.setProperty('--sender-fixed-image','url('+JSON.stringify(url)+')')}else{el.style.removeProperty('--sender-fixed-image')}})}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',configureFixedBackgrounds);else configureFixedBackgrounds();
-
-  var ROOT='[data-plugin="agendamento-sender"] [data-ags-mount]';
-  var WEEK=['DOMINGO','SEGUNDA','TERÇA','QUARTA','QUINTA','SEXTA','SÁBADO'];
-  var MONTH=['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-  function bool(value){return value===true||value==='true'||value==='1'||value==='on';}
-  function num(value,min,max,fallback){var n=Number(value);return Number.isFinite(n)?Math.max(min,Math.min(max,Math.round(n))):fallback;}
-  function safe(value){return String(value == null?'':value).trim();}
-  // Calendário civil no fuso do empreendimento; UTC-only internamente para não sofrer desvios do navegador.
-  function iso(date){return date.getUTCFullYear()+'-'+String(date.getUTCMonth()+1).padStart(2,'0')+'-'+String(date.getUTCDate()).padStart(2,'0');}
-  function civilDate(y,m,d){return new Date(Date.UTC(y,m-1,d,12,0,0));}
-  function addDays(date,days){var clone=new Date(date.getTime());clone.setUTCDate(clone.getUTCDate()+days);return clone;}
-  function format(date){return String(date.getUTCDate()).padStart(2,'0')+'/'+String(date.getUTCMonth()+1).padStart(2,'0')+'/'+date.getUTCFullYear();}
-  function label(date){return WEEK[date.getUTCDay()].toLowerCase()+', '+format(date);}
-  function validTimeZone(tz){try{new Intl.DateTimeFormat('pt-BR',{timeZone:tz}).format(new Date());return tz;}catch(_){return 'America/Sao_Paulo';}}
-  function todayAtTimeZone(tz){
-    var fields=new Intl.DateTimeFormat('en-US',{timeZone:tz,year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date());
-    var o={};fields.forEach(function(item){if(item.type!=='literal')o[item.type]=+item.value;});
-    return civilDate(o.year,o.month,o.day);
-  }
-  function stampAtTimeZone(tz){return new Intl.DateTimeFormat('pt-BR',{timeZone:tz,dateStyle:'short',timeStyle:'medium'}).format(new Date())+' ('+tz+')';}
-  function escapeHtml(value){return String(value).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});}
-  function eligibleDate(date,config){
-    if(config.blocked.has(iso(date)))return {available:false,reason:'Data bloqueada para visitas'};
-    if(!config.weekdays[date.getUTCDay()])return {available:false,reason:'Dia da semana não atendido'};
-    if(!config.turnsByDay[date.getUTCDay()].length)return {available:false,reason:'Sem turnos disponíveis neste dia'};
-    return {available:true,reason:''};
-  }
-  function makeDates(config){
-    var today=todayAtTimeZone(config.timeZone), dates=[];
-    for(var offset=config.leadDays;offset<=config.horizonDays;offset++){
-      var d=addDays(today,offset), availability=eligibleDate(d,config);
-      dates.push({date:d,available:availability.available,reason:availability.reason});
-    }
-    return dates;
-  }
-  // Feedback visual do FormSender V4: usa notify_Send_notification quando disponível.
-  // Fallback autônomo para landing pages que usam apenas Agendamento Sender.
-  var noticeGlyphs={
-    success:'<path d="m5 12 4 4L19 6"/>',
-    error:'<path d="m6 6 12 12M18 6 6 18"/>',
-    warning:'<path d="M12 8v5m0 3h.01"/><path d="m10.3 3.9-8.5 14.7A2 2 0 0 0 3.5 21h17a2 2 0 0 0 1.7-2.4L13.7 3.9a2 2 0 0 0-3.4 0z"/>',
-    info:'<path d="M12 11v6m0-10h.01"/><circle cx="12" cy="12" r="10"/>'
-  };
-  function notify(mount,type,message,title){
-    var external=window.notify_Send_notification;
-    if(typeof external==='function'){
-      try{external(type,message,title);return;}catch(err){console.warn('[Agendamento Sender] Notificação externa indisponível:',err);}
-    }
-    var stack=document.getElementById('ags-notification-container');
-    if(!stack){
-      stack=document.createElement('div');stack.id='ags-notification-container';
-      stack.className='ags-notification-container';stack.setAttribute('aria-live','polite');
-      stack.setAttribute('aria-relevant','additions');document.body.appendChild(stack);
-    }
-    var notice=document.createElement('div');notice.className='ags-notification '+(noticeGlyphs[type]?type:'info');
-    notice.setAttribute('role',type==='error'?'alert':'status');
-    var avatar=document.createElement('span');avatar.className='ags-notification-avatar';avatar.setAttribute('aria-hidden','true');
-    avatar.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">'+noticeGlyphs[type||'info']+'</svg>';
-    var content=document.createElement('span');content.className='ags-notification-content';
-    var heading=document.createElement('strong');heading.className='ags-notification-title';heading.textContent=title||'Agendamento';
-    var detail=document.createElement('span');detail.className='ags-notification-message';detail.textContent=message;
-    content.appendChild(heading);content.appendChild(detail);
-    var close=document.createElement('button');close.type='button';close.className='ags-notification-close';close.setAttribute('aria-label','Fechar notificação');close.textContent='×';
-    var bar=document.createElement('span');bar.className='ags-notification-progress';bar.setAttribute('aria-hidden','true');
-    notice.appendChild(avatar);notice.appendChild(content);notice.appendChild(close);notice.appendChild(bar);
-    Array.from(stack.children).forEach(function(previous){previous.remove();});
-    stack.appendChild(notice);
-    var timer=0;
-    function dismiss(){window.clearTimeout(timer);notice.classList.remove('show');notice.classList.add('hide');window.setTimeout(function(){notice.remove();},300);}
-    close.addEventListener('click',dismiss);
-    window.requestAnimationFrame(function(){notice.classList.add('show');bar.classList.add('running');});
-    timer=window.setTimeout(dismiss,type==='error'?7500:5500);
-  }
-  function init(mount){
-    if(mount.dataset.agsReady==='true')return;
-    mount.dataset.agsReady='true';
-    var settings=mount.dataset;
-    var allTurns=safe(settings.turns).split('|').map(safe).filter(Boolean);if(!allTurns.length)allTurns=['Manhã','Tarde','Noite'];
-    var timeZone=validTimeZone(safe(settings.timeZone)||'America/Sao_Paulo');
-    function resolveTurns(key){var v=safe(settings[key]||'all').toLowerCase();if(v==='none')return [];if(v==='all')return allTurns.slice();return v.split(',').map(function(v){return Number(v.trim())-1;}).filter(function(i){return Number.isInteger(i)&&i>=0&&i<allTurns.length;}).map(function(i){return allTurns[i];});}
-    var config={leadDays:num(settings.leadDays,0,30,1),horizonDays:num(settings.horizonDays,7,180,60),
-      visibleDays:num(settings.visibleDays,3,8,6),
-      weekdays:['allowSunday','allowMonday','allowTuesday','allowWednesday','allowThursday','allowFriday','allowSaturday'].map(function(key){return bool(settings[key]);}),
-      timeZone:timeZone,turnsByDay:['sundayTurns','mondayTurns','tuesdayTurns','wednesdayTurns','thursdayTurns','fridayTurns','saturdayTurns'].map(resolveTurns),
-      blocked:new Set(safe(settings.blockedDates).split(/[\s,;|]+/).filter(function(s){return /^\d{4}-\d{2}-\d{2}$/.test(s);}))};
-    config.horizonDays=Math.max(config.leadDays,config.horizonDays);
-    var dates=makeDates(config),dayWrap=mount.querySelector('.ags-day-list'),prev=mount.querySelector('.ags-prev'),next=mount.querySelector('.ags-next'),
-      form=mount.querySelector('.ags-form'),status=mount.querySelector('.ags-status'),submit=mount.querySelector('.ags-submit'),
-      email=form.querySelector('[name=email]'),turn=form.querySelector('[name=turnoPreferido]'),phone=form.querySelector('[name=telefone]');
-    if(!dayWrap||!form||!prev||!next)return;
-    var firstAvailable=dates.findIndex(function(d){return d.available;});
-    var selected=firstAvailable>=0?iso(dates[firstAvailable].date):'',page=0,busy=false;
-    // Start with the first actual available day instead of a page containing only disabled dates.
-    if(firstAvailable>=0)page=Math.floor(firstAvailable/config.visibleDays)*config.visibleDays;
-    var section=mount.closest('.ags-section');
-    if(section){
-      var preset=safe(section.dataset.agsPreset)||'auto',profile=safe(section.dataset.agsProjectProfile).toLowerCase();
-      if(preset==='auto')preset=/popular|firsthome|patio|urgency|mcmv|familia/.test(profile)?'popular':/luxury|exclusive|premium|sophisticat|alto-padrao/.test(profile)?'editorial':/invest|nautic|resort/.test(profile)?'immersive':'contemporary';
-      if(!/^(popular|contemporary|sophisticated|minimal|spotlight|immersive|editorial)$/.test(preset))preset='contemporary';
-      section.dataset.agsEffectivePreset=preset;
-    }
-    var shifts=function(){return window.matchMedia&&window.matchMedia('(max-width: 570px)').matches?3:config.visibleDays;};
-    function statusShow(text,kind){status.textContent=text;status.className='ags-status'+(kind?' is-'+kind:'');}
-    function feedback(text,kind,title){statusShow(text,kind);notify(mount,kind==='error'?'error':kind==='success'?'success':kind==='warning'?'warning':'info',text,title);}
-    function dateTurns(){var item=dates.find(function(item){return item.available&&iso(item.date)===selected;});return item?config.turnsByDay[item.date.getUTCDay()]:[];}
-    function syncTurns(){
-      var options=dateTurns(),prior=turn.value||safe(settings.defaultTurn);
-      turn.innerHTML='';options.forEach(function(value){var opt=document.createElement('option');opt.value=value;opt.textContent=value;turn.appendChild(opt);});
-      if(options.includes(prior))turn.value=prior;else if(options.includes(settings.defaultTurn))turn.value=settings.defaultTurn;
-      turn.disabled=!options.length;
-    }
-    var zoneLabel=mount.querySelector('.ags-time-zone-label');if(zoneLabel)zoneLabel.textContent='Datas e turnos no fuso: '+timeZone.replace(/_/g,' ');
-    var conversion=mount.querySelector('[data-ags-conversion]');
-    var showPanel=bool(settings.showConversionPanel)&&section&&section.dataset.agsConversionLayout!=='compact';
-    if(section){section.classList.toggle('ags-has-conversion',!!showPanel);section.classList.toggle('ags-no-conversion',!showPanel);}
-    // Um unico CTA visivel: painel ativo envia o formulario; caso contrario, apenas aviaozinho.
-    var panelSubmit=conversion?conversion.querySelector('[data-ags-send]'):null;
-    submit.hidden=!!showPanel;
-    submit.setAttribute('aria-hidden',showPanel?'true':'false');
-    if(conversion){
-      conversion.hidden=!showPanel;
-      if(panelSubmit){
-        panelSubmit.hidden=!showPanel;
-        panelSubmit.addEventListener('click',function(){
-          if(busy||panelSubmit.disabled)return;
-          // Delegar ao mesmo evento submit preserva toda a validacao e contrato FormSender.
-          if(typeof form.requestSubmit==='function')form.requestSubmit(submit);
-          else submit.click();
-        });
-      }
-    }
-    syncTurns();
-    var showEmail=bool(settings.showEmail), requireEmail=bool(settings.requireEmail);
-    email.hidden=!showEmail;email.required=showEmail&&requireEmail;
-    if(!showEmail){email.disabled=true;form.classList.add('ags-no-email');}
-    function draw(){
-      var visible=shifts(),slice=dates.slice(page,page+visible);
-      dayWrap.style.setProperty('--ags-visible',String(visible));
-      dayWrap.innerHTML=slice.map(function(item){
-        var d=item.date,value=iso(d),active=item.available&&value===selected;
-        var unavailable=!item.available,reason=unavailable?' — Indisponível: '+item.reason:'';
-        return '<button type="button" class="ags-day'+(active?' is-active':'')+(unavailable?' is-disabled':'')+'" aria-label="'+escapeHtml(label(d)+reason)+'" aria-pressed="'+active+'"'+(unavailable?' disabled aria-disabled="true" title="'+escapeHtml(item.reason)+'"':'')+' data-ags-date="'+value+'"><span class="ags-day-week">'+WEEK[d.getUTCDay()]+'</span><span class="ags-day-num">'+String(d.getUTCDate()).padStart(2,'0')+'</span><span class="ags-day-month">'+MONTH[d.getUTCMonth()]+'</span></button>';
-      }).join('');
-      prev.disabled=page===0;next.disabled=page+visible>=dates.length;syncTurns();
-    }
-    if(firstAvailable<0){feedback('Nenhuma data disponível neste período. Solicite à equipe uma nova janela de atendimento.','warning','Sem datas disponíveis');submit.disabled=true;if(panelSubmit)panelSubmit.disabled=true;prev.disabled=true;next.disabled=true;}
-    prev.addEventListener('click',function(){page=Math.max(0,page-shifts());draw();});
-    next.addEventListener('click',function(){page=Math.min(Math.max(0,dates.length-shifts()),page+shifts());draw();});
-    dayWrap.addEventListener('click',function(e){var node=e.target.closest('[data-ags-date]');if(!node||!dayWrap.contains(node)||node.disabled||!dates.some(function(item){return item.available&&iso(item.date)===node.dataset.agsDate;}))return;selected=node.dataset.agsDate;draw();statusShow('','');});
-    window.addEventListener('resize',function(){if(!mount.isConnected)return;var total=shifts();if(page+total>dates.length)page=Math.max(0,dates.length-total);draw();},{passive:true});
-    form.addEventListener('submit',function(e){
-      e.preventDefault();if(busy)return;
-      if(!selected){feedback('Selecione uma data para a visita.','error','Selecione uma data');return;}
-      // Verifique novamente a data no momento do envio (a página pode estar aberta há dias).
-      var eligible=makeDates(config).some(function(item){return item.available&&iso(item.date)===selected;});
-      if(!dateTurns().includes(turn.value)){feedback('O turno escolhido não está disponível nesse dia.','error','Turno indisponível');return;}
-      if(!eligible){feedback('Esta data não está mais disponível. Atualize a página e selecione outra.','error','Data indisponível');return;}
-      var phoneDigits=safe(phone.value).replace(/\D/g,'');
-      if(!form.checkValidity()||phoneDigits.length<10||phoneDigits.length>13){
-        feedback('Informe nome, telefone válido'+(email.required?' e e-mail válido':'')+'.','error','Confira seus dados');
-        if(!form.checkValidity())form.reportValidity();else phone.focus();
-        return;
-      }
-      var endpoint='https://script.google.com/macros/s/AKfycbxxA_8OOrK8oSJk6dFSC4bSvIHxICKLYG6ZpalORyFnM5fe-I4eLil-KGsKyoD31NMWlg/exec';
-      if(!/^https:\/\//i.test(endpoint)){feedback('Configure um endpoint HTTPS do FormSender antes de enviar.','error','Configuração necessária');return;}
-      if(window.__IMOBIFY_EDITOR__){feedback('Prévia do editor: envio de agendamento desativado.','info','Modo de edição');return;}
-      if(!form.dataset.financialReady && window.ImobifyFinancialFlow && window.ImobifyFinancialFlow.isEnabled(mount.closest('.ags-section').dataset)){
-        busy=true;
-        window.ImobifyFinancialFlow.launch(mount.closest('.ags-section').dataset).then(function(results){
-          window.ImobifyFinancialFlow.addToForm(form,results);form.dataset.financialReady='1';busy=false;
-          if(typeof form.requestSubmit==='function')form.requestSubmit(submit);else submit.click();
-        }).catch(function(err){busy=false;console.warn('[Agendamento financeiro]',err)});
-        return;
-      }
-      busy=true;submit.disabled=true;submit.classList.add('is-sending');submit.setAttribute('aria-busy','true');if(panelSubmit){panelSubmit.disabled=true;panelSubmit.classList.add('is-sending');panelSubmit.setAttribute('aria-busy','true');}statusShow('Enviando solicitação...','');
-      var bookingItem=dates.find(function(item){return item.available&&iso(item.date)===selected;});
-      if(!bookingItem){feedback('A data selecionada não está mais disponível.','error','Data indisponível');busy=false;submit.disabled=false;submit.classList.remove('is-sending');if(panelSubmit){panelSubmit.disabled=false;panelSubmit.classList.remove('is-sending');panelSubmit.removeAttribute('aria-busy');}return;}
-      var bookingDate=bookingItem.date;
-      var chosenTurn=turn.value;
-      var product=safe(settings.product),summary=['Solicitação de agendamento de visita','Empreendimento: '+product,'Data solicitada: '+format(bookingDate),'Turno preferido: '+turn.value,'Fuso horário do empreendimento: '+timeZone,'Status: aguardando confirmação da equipe'].join('\n');
-      var payload=new FormData();
-      payload.append('produto',product);payload.append('nome',safe(form.elements.nome.value));
-      payload.append('email',showEmail?safe(email.value):'');payload.append('telefone',safe(phone.value));
-      payload.append('dataHora',stampAtTimeZone(timeZone));
-      payload.append('msg',summary);payload.append('origem','Agendamento Sender');payload.append('assunto','Solicitação de agendamento');
-      if(form.elements.condicoesFinanceiras){payload.append('condicoesFinanceiras',form.elements.condicoesFinanceiras.value);payload.set('msg',summary+'\n\nCondições financeiras:\n'+form.elements.condicoesFinanceiras.value)}
-      payload.append('agendamento',format(bookingDate)+' — '+turn.value);
-      payload.append('agendamentoData',format(bookingDate));payload.append('agendamentoDataISO',selected);
-      payload.append('agendamentoTurno',turn.value);payload.append('agendamentoFuso',timeZone);payload.append('agendamentoStatus','Pendente de confirmação');
-      fetch(endpoint,{method:'POST',body:payload}).then(function(response){
-        if(!response.ok)throw new Error('Servidor respondeu '+response.status);
-        return response.text();
-      }).then(function(body){
-        var data;try{data=JSON.parse(body);}catch(_){data=null;}
-        if(data&&(data.success===false||data.ok===false||data.status==='error'))throw new Error(data.message||'O servidor rejeitou a solicitação.');
-        if(/^\s*(erro|error|falha)\b/i.test(body))throw new Error('O servidor retornou erro.');
-        form.reset();delete form.dataset.financialReady;var fin=form.querySelector('[name=condicoesFinanceiras]');if(fin)fin.remove();syncTurns();
-        feedback(safe(settings.successMessage)||'Solicitação recebida. Aguarde nossa confirmação.','success','Solicitação enviada!');
-        mount.dispatchEvent(new CustomEvent('agendamento-sender:success',{bubbles:true,detail:{data:selected,turno:chosenTurn,produto:product,timeZone:timeZone}}));
-      }).catch(function(error){console.warn('[Agendamento Sender]',error);feedback('Não foi possível enviar sua solicitação. Verifique a conexão e tente novamente.','error','Falha no envio');})
-      .finally(function(){busy=false;submit.disabled=false;submit.classList.remove('is-sending');submit.removeAttribute('aria-busy');if(panelSubmit){panelSubmit.disabled=false;panelSubmit.classList.remove('is-sending');panelSubmit.removeAttribute('aria-busy');}});
-    });
-    draw();
-  }
-  function boot(){document.querySelectorAll(ROOT).forEach(init);}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-})();
-
-
 (function () {
   "use strict";
 
@@ -1630,6 +1396,1032 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   } else {
     initialize();
   }
+})();
+
+
+/* IMOBIFY Financeiro — versão 1.0.0: módulo reutilizável, sem telemetria ou envios paralelos. */
+(function(){'use strict';if(window.ImobifyFinancialFlow)return;
+function parse(config){var raw=config.financialQuestions||'';try{var v=JSON.parse(raw);if(Array.isArray(v))return v.filter(function(q){return q&&q.id&&q.label}).slice(0,30)}catch(e){console.warn('[Imobify financeiro] Configuração inválida; revise o JSON.',e)}return []}
+function isEnabled(config){return ['true','1','on'].includes(String(config.financialEnabled))}
+function launch(config){return new Promise(function(resolve){var questions=parse(config);if(!isEnabled(config)||!questions.length){resolve([]);return}
+ var cover=document.createElement('div');cover.className='imobify-finance-overlay';cover.setAttribute('role','presentation');
+ var card=document.createElement('section');card.className='imobify-finance-dialog';card.setAttribute('role','dialog');card.setAttribute('aria-modal','true');card.setAttribute('aria-label','Condições financeiras');card.tabIndex=-1;
+ var title=document.createElement('h2');title.textContent=config.financialTitle||'Para entender suas condições';var desc=document.createElement('p');desc.textContent=config.financialCopy||'Algumas respostas ajudam a personalizar o atendimento.';
+ var form=document.createElement('form');form.noValidate=true;form.className='imobify-finance-form';var items=document.createElement('div');items.className='imobify-finance-items';var status=document.createElement('p');status.className='imobify-finance-status';status.setAttribute('role','alert');var submit=document.createElement('button');submit.type='submit';submit.textContent='Enviar';submit.className='imobify-design-cta imobify-finance-submit';submit.setAttribute('data-design-role','cta');
+ form.append(items,status,submit);card.append(title,desc,form);cover.append(card);document.body.append(cover);
+ var focusBefore=document.activeElement,answers={};function visible(q){if(!q.showIf)return true;var parent=answers[q.showIf.id];if(Array.isArray(parent))return parent.includes(q.showIf.equals);return String(parent||'')===String(q.showIf.equals)}
+ function setAnswer(id,v){answers[id]=v;questions.forEach(function(q){if(!visible(q))delete answers[q.id]});render()}
+ function render(){items.replaceChildren();questions.forEach(function(q){if(!visible(q))return;var field=document.createElement('fieldset');var legend=document.createElement('legend');legend.textContent=q.label+(q.required?' *':'');field.append(legend);var type=q.type||'yesno';if(type==='date'||type==='text'||type==='number'){var inp=document.createElement('input');inp.type=type;inp.value=answers[q.id]||'';if(type==='date'){inp.max=new Date().toISOString().slice(0,10)}inp.addEventListener('change',function(){setAnswer(q.id,inp.value)});field.append(inp)}else{var opts=type==='yesno'?['Sim','Não']:Array.isArray(q.options)?q.options:[];var group=document.createElement('div');group.className='imobify-finance-options';opts.forEach(function(option){var label=document.createElement('label'),inp=document.createElement('input');inp.type=type==='multiple'?'checkbox':'radio';inp.name='finance_'+q.id;inp.value=option;inp.checked=type==='multiple'?Array.isArray(answers[q.id])&&answers[q.id].includes(option):answers[q.id]===option;inp.addEventListener('change',function(){if(type==='multiple'){var arr=Array.isArray(answers[q.id])?answers[q.id].slice():[];arr=inp.checked?[...arr,option]:arr.filter(function(x){return x!==option});setAnswer(q.id,arr)}else setAnswer(q.id,option)});label.append(inp,document.createTextNode(option));group.append(label)});field.append(group)}items.append(field)});status.textContent=''}
+ function finish(){var missing=questions.find(function(q){return visible(q)&&q.required&&(!answers[q.id]||(Array.isArray(answers[q.id])&&!answers[q.id].length))});if(missing){status.textContent='Responda: '+missing.label;return}var result=questions.filter(function(q){return visible(q)&&answers[q.id]!==undefined&&answers[q.id]!==''}).map(function(q){return {id:q.id,label:q.label,answer:Array.isArray(answers[q.id])?answers[q.id].join(' | '):String(answers[q.id])}});cover.remove();if(focusBefore&&focusBefore.isConnected)focusBefore.focus();resolve(result)}
+ form.addEventListener('submit',function(e){e.preventDefault();finish()});cover.addEventListener('keydown',function(e){if(e.key==='Tab'){var elements=Array.from(cover.querySelectorAll('input,button')).filter(function(el){return el.getClientRects().length});if(!elements.length)return;var first=elements[0],last=elements[elements.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});render();card.focus();
+ })}
+function addToForm(form,results){if(!form||!results||!results.length)return;var text=results.map(function(r){return r.label+': '+r.answer}).join('\n');var hidden=form.querySelector('[name="condicoesFinanceiras"]');if(!hidden){hidden=document.createElement('input');hidden.type='hidden';hidden.name='condicoesFinanceiras';form.append(hidden)}hidden.value=text;var msg=form.querySelector('[name="msg"]');if(msg)msg.value=[msg.value,'Condições financeiras:',text].filter(Boolean).join('\n\n')}
+window.ImobifyFinancialFlow={launch:launch,addToForm:addToForm,isEnabled:isEnabled};})();
+
+
+/**
+ * ================================================================
+ * notify-send.js v1.2.0 - Sistema de Notificações e Alertas
+ * ================================================================
+ */
+
+(function() {
+    'use strict';
+    
+    // ============================================================
+    // CONFIGURAÇÕES
+    // ============================================================
+    
+    const CONFIG = {
+        notificationDuration: 5000,
+        alertDefaultAvatar: 'fa-info-circle',
+        alertTypes: {
+            success: { icon: 'fa-check-circle', color: '#27ae60', title: 'Sucesso' },
+            error: { icon: 'fa-times-circle', color: '#e74c3c', title: 'Erro' },
+            warning: { icon: 'fa-exclamation-triangle', color: '#f39c12', title: 'Atenção' },
+            info: { icon: 'fa-info-circle', color: '#3498db', title: 'Informação' },
+            question: { icon: 'fa-question-circle', color: '#9b59b6', title: 'Pergunta' }
+        },
+        defaultMessages: {
+            success: { title: 'Sucesso!', message: 'Operação realizada com sucesso.' },
+            error: { title: 'Erro!', message: 'Ocorreu um erro. Tente novamente.' },
+            warning: { title: 'Atenção!', message: 'Verifique as informações antes de continuar.' },
+            info: { title: 'Informação', message: 'Aguarde enquanto processamos sua solicitação.' }
+        },
+        icons: {
+            success: 'fa-check-circle',
+            error: 'fa-exclamation-circle',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info-circle'
+        },
+        defaultAvatar: 'fa-bell'
+    };
+    
+    // ============================================================
+    // CRIAÇÃO DOS CONTAINERS
+    // ============================================================
+    
+    function createContainers() {
+        // Container de Notificações
+        if (!document.getElementById('ns-notification-container')) {
+            const container = document.createElement('div');
+            container.id = 'ns-notification-container';
+            container.className = 'ns-notification-container';
+            document.body.appendChild(container);
+        }
+        
+        // Modal Overlay
+        if (!document.getElementById('ns-modal-overlay')) {
+            const modalOverlay = document.createElement('div');
+            modalOverlay.id = 'ns-modal-overlay';
+            modalOverlay.className = 'ns-modal-overlay';
+            modalOverlay.innerHTML = `
+                <div class="ns-modal">
+                    <div class="ns-modal-avatar-container" style="text-align: center; margin-bottom: 15px; display: none;">
+                        <div class="ns-modal-avatar" style="width: 80px; height: 80px; border-radius: 50%; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <i class="fas fa-info-circle" style="font-size: 48px; color: white;"></i>
+                        </div>
+                    </div>
+                    <div class="ns-modal-icon" style="text-align: center; font-size: 50px; margin-bottom: 20px;">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <h2 class="ns-modal-title">Título</h2>
+                    <p class="ns-modal-message">Mensagem</p>
+                    <div class="ns-modal-buttons">
+                        <button class="ns-modal-button confirm" style="background: #3498db; padding: 12px 28px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; color: white;">OK</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modalOverlay);
+        }
+        
+        // Toast
+        if (!document.getElementById('ns-toast')) {
+            const toast = document.createElement('div');
+            toast.id = 'ns-toast';
+            toast.className = 'ns-toast';
+            document.body.appendChild(toast);
+        }
+    }
+    
+    // ============================================================
+    // FUNÇÃO PRINCIPAL: ALERT COM AVATAR
+    // ============================================================
+    
+    window.notify_Send_alert = function(message, type = 'info', title = '', avatar = '') {
+        return new Promise((resolve) => {
+            const modalOverlay = document.getElementById('ns-modal-overlay');
+            if (!modalOverlay) {
+                console.error('notify_Send: Modal overlay não encontrado');
+                resolve();
+                return;
+            }
+            
+            const modal = modalOverlay.querySelector('.ns-modal');
+            const modalTitle = modal.querySelector('.ns-modal-title');
+            const modalMessage = modal.querySelector('.ns-modal-message');
+            const confirmBtn = modal.querySelector('.ns-modal-button.confirm');
+            const modalIcon = modal.querySelector('.ns-modal-icon');
+            const modalIconI = modal.querySelector('.ns-modal-icon i');
+            const avatarContainer = modal.querySelector('.ns-modal-avatar-container');
+            const avatarDiv = modal.querySelector('.ns-modal-avatar');
+            
+            // Configurar tipo
+            const typeConfig = CONFIG.alertTypes[type] || CONFIG.alertTypes.info;
+            const finalTitle = title || typeConfig.title;
+            
+            // Atualizar conteúdo
+            modalTitle.textContent = finalTitle;
+            modalMessage.textContent = message || 'Mensagem';
+            confirmBtn.textContent = 'OK';
+            confirmBtn.style.background = typeConfig.color;
+            
+            // Configurar avatar
+            if (avatar) {
+                // Mostrar container de avatar, esconder ícone padrão
+                avatarContainer.style.display = 'block';
+                modalIcon.style.display = 'none';
+                
+                // Configurar avatar
+                if (avatar.match(/^(https?:\/\/|data:image|\/)/i) || avatar.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+                    // É URL de imagem
+                    avatarDiv.innerHTML = `<img src="${avatar}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">`;
+                } else if (avatar.startsWith('fa-')) {
+                    // É ícone Font Awesome
+                    avatarDiv.innerHTML = `<i class="fas ${avatar}" style="font-size: 48px; color: white;"></i>`;
+                } else {
+                    // Fallback
+                    avatarDiv.innerHTML = `<i class="fas ${CONFIG.alertDefaultAvatar}" style="font-size: 48px; color: white;"></i>`;
+                }
+            } else {
+                // Sem avatar, mostrar ícone padrão do tipo
+                avatarContainer.style.display = 'none';
+                modalIcon.style.display = 'block';
+                if (modalIconI) {
+                    modalIconI.className = `fas ${typeConfig.icon}`;
+                    modalIconI.style.color = typeConfig.color;
+                }
+            }
+            
+            // Função para fechar
+            function closeModal() {
+                modalOverlay.classList.remove('show');
+                resolve();
+            }
+            
+            // Remover listener antigo e adicionar novo
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+            
+            newConfirmBtn.addEventListener('click', closeModal);
+            
+            // Fechar ao clicar fora
+            modalOverlay.onclick = function(e) {
+                if (e.target === modalOverlay) {
+                    closeModal();
+                }
+            };
+            
+            // Mostrar modal
+            modalOverlay.classList.add('show');
+        });
+    };
+    
+    // ============================================================
+    // SOBRESCREVER ALERT NATIVO
+    // ============================================================
+    
+    let alertOverridden = false;
+    let originalAlert = null;
+    
+    window.notify_Send_override_alert = function(enable = true, defaultAvatar = '') {
+        if (enable && !alertOverridden) {
+            // Salvar referência do alert original
+            originalAlert = window.alert;
+            
+            // Substituir
+            window.alert = function(message) {
+                window.notify_Send_alert(message, 'info', 'Aviso', defaultAvatar);
+            };
+            alertOverridden = true;
+            console.log('✅ Alert nativo substituído pelo notify_Send_alert');
+        } else if (!enable && alertOverridden) {
+            // Restaurar alert original
+            window.alert = originalAlert;
+            alertOverridden = false;
+            console.log('✅ Alert nativo restaurado');
+        }
+    };
+    
+    // ============================================================
+    // FUNÇÕES DE NOTIFICAÇÃO
+    // ============================================================
+    
+    function getAvatarHTML(avatar) {
+        if (!avatar) {
+            return `<div class="ns-notification-avatar"><i class="fas ${CONFIG.defaultAvatar}"></i></div>`;
+        }
+        
+        if (avatar.match(/^(https?:\/\/|data:image|\/)/i) || avatar.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+            return `<div class="ns-notification-avatar"><img src="${avatar}" alt="Avatar" onerror="this.parentElement.innerHTML='<i class=\'fas fa-user-circle\'></i>'"></div>`;
+        }
+        
+        if (avatar.startsWith('fa-')) {
+            return `<div class="ns-notification-avatar"><i class="fas ${avatar}"></i></div>`;
+        }
+        
+        return `<div class="ns-notification-avatar"><i class="fas fa-user-circle"></i></div>`;
+    }
+    
+    function closeNotification(notificationElement) {
+        if (!notificationElement || !notificationElement.parentElement) return;
+        notificationElement.classList.remove('show');
+        notificationElement.classList.add('hide');
+        setTimeout(() => {
+            if (notificationElement.parentElement) {
+                notificationElement.parentElement.removeChild(notificationElement);
+            }
+        }, 400);
+    }
+    
+    window.notify_Send_notification = function(type, message = '', title = '', avatar = '') {
+        const validTypes = ['success', 'error', 'warning', 'info'];
+        if (!validTypes.includes(type)) {
+            console.warn(`notify_Send: Tipo inválido "${type}". Usando "info".`);
+            type = 'info';
+        }
+        
+        const finalTitle = title || CONFIG.defaultMessages[type].title;
+        const finalMessage = message || CONFIG.defaultMessages[type].message;
+        
+        const notification = document.createElement('div');
+        notification.className = `ns-notification ${type}`;
+        
+        const avatarHTML = getAvatarHTML(avatar);
+        const iconHTML = !avatar ? `<i class="fas ${CONFIG.icons[type]} ns-notification-icon"></i>` : '';
+        
+        notification.innerHTML = `
+            ${avatarHTML}
+            ${iconHTML}
+            <div class="ns-notification-content">
+                <div class="ns-notification-title">${escapeHtml(finalTitle)}</div>
+                <div class="ns-notification-message">${escapeHtml(finalMessage)}</div>
+            </div>
+            <button class="ns-notification-close" onclick="notify_Send_close_notification(this.parentElement)">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="ns-notification-progress"></div>
+        `;
+        
+        const container = document.getElementById('ns-notification-container');
+        if (container) {
+            container.appendChild(notification);
+        } else {
+            console.error('notify_Send: Container de notificações não encontrado');
+            return;
+        }
+        
+        setTimeout(() => {
+            notification.classList.add('show');
+            const progressBar = notification.querySelector('.ns-notification-progress');
+            if (progressBar) {
+                setTimeout(() => {
+                    progressBar.style.transform = 'scaleX(0)';
+                }, 50);
+            }
+        }, 10);
+        
+        const timeoutId = setTimeout(() => {
+            if (notification.parentElement) {
+                closeNotification(notification);
+            }
+        }, CONFIG.notificationDuration);
+        
+        notification.dataset.timeoutId = timeoutId;
+    };
+    
+    window.notify_Send_close_notification = function(notificationElement) {
+        if (notificationElement && notificationElement.dataset.timeoutId) {
+            clearTimeout(parseInt(notificationElement.dataset.timeoutId));
+        }
+        closeNotification(notificationElement);
+    };
+    
+    window.notify_Send_close_all = function() {
+        const container = document.getElementById('ns-notification-container');
+        if (container) {
+            const notifications = container.querySelectorAll('.ns-notification');
+            notifications.forEach(notification => {
+                closeNotification(notification);
+            });
+        }
+    };
+    
+    window.notify_Send_toast = function(message, duration = 3000) {
+        const toast = document.getElementById('ns-toast');
+        if (!toast) {
+            console.error('notify_Send: Toast element não encontrado');
+            return;
+        }
+        toast.textContent = message || 'Notificação';
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, duration);
+    };
+    
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Inicialização
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', createContainers);
+    } else {
+        createContainers();
+    }
+    
+    console.log('🎉 notify-send.js carregado com sucesso!');
+    console.log('📌 Funções disponíveis:');
+    console.log('   - notify_Send_alert()');
+    console.log('   - notify_Send_notification()');
+    console.log('   - notify_Send_modal()');
+    console.log('   - notify_Send_toast()');
+    console.log('   - notify_Send_override_alert()');
+    
+})();
+
+/**
+ * formsenderJS.Plugin - Formulário de contato com validação e integração com notify-send
+ * 
+ * Uso:
+ * new formsenderJS.Plugin('#meu-formulario', {
+ *   produto: 'The Garden - New Edition',
+ *   endpoint: 'https://script.google.com/macros/s/.../exec',
+ *   textoBotao: 'Enviar Mensagem'
+ * });
+ */
+(function() {
+    'use strict';
+
+    window.formsenderJS = window.formsenderJS || {};
+
+    class FormPlugin {
+        constructor(selector, options = {}) {
+            // Container
+            this.container = document.querySelector(selector);
+            if (!this.container) {
+                console.error(`[formsenderJS] Elemento "${selector}" não encontrado.`);
+                throw new Error(`Elemento "${selector}" não encontrado.`);
+            }
+
+            // Opções padrão
+            const defaults = {
+                produto: 'The Garden - New Edition',
+                endpoint: '',                    // obrigatório
+                textoBotao: 'Enviar Mensagem',
+                mostrarMensagem: true,
+                mostrarCheckboxes: false,
+                mostrarDataNasc: false,
+                notificacao: null,               // função personalizada (tipo, mensagem, titulo)
+                onSuccess: null,
+                onError: null
+            };
+            this.opts = { ...defaults, ...options };
+
+            if (!this.opts.endpoint) {
+                throw new Error('[formsenderJS] A opção "endpoint" é obrigatória.');
+            }
+
+            // Gera ID único
+            this.uid = 'fs-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
+
+            // Constrói o HTML
+            this.buildForm();
+
+            // Inicializa eventos
+            this.initEvents();
+
+            console.log('[formsenderJS] Plugin inicializado com sucesso!');
+        }
+
+        // ---------- Monta o formulário (com prefixo CSS) ----------
+        buildForm() {
+            const uid = this.uid;
+            const opts = this.opts;
+            const css = 'formsenderCSS_';
+
+            const hiddenFields = `
+                <input type="hidden" name="produto" value="${opts.produto.replace(/"/g, '&quot;')}">
+                <input type="hidden" name="dataHora" id="dataHora_${uid}">
+            `;
+
+            const nascimentoHtml = opts.mostrarDataNasc ? `
+                <div class="${css}field">
+                    <label for="nascimento_${uid}" class="${css}label">Data de Nascimento</label>
+                    <input type="date" id="nascimento_${uid}" name="nascimento" class="${css}input">
+                </div>
+            ` : `
+                <input type="date" name="nascimento" style="display:none;">
+            `;
+
+            const checkboxesHtml = opts.mostrarCheckboxes ? `
+                <div class="${css}field">
+                    <label class="${css}label">Informações Adicionais</label>
+                    <div class="${css}checkbox-group">
+                        <label class="${css}checkbox">
+                            <input type="checkbox" name="anosCtps" value="X"> 3 Anos de carteira assinada?
+                        </label>
+                        <label class="${css}checkbox">
+                            <input type="checkbox" name="fatorsocial" value="X"> Possui cônjuge ou dependente(a)
+                        </label>
+                        <label class="${css}checkbox">
+                            <input type="checkbox" name="imovelnome" value="X"> Possui imóvel no nome?
+                        </label>
+                    </div>
+                </div>
+            ` : '';
+
+            const mensagemHtml = opts.mostrarMensagem ? `
+                <div class="${css}field">
+                    <label for="msg_${uid}" class="${css}label">Mensagem</label>
+                    <textarea id="msg_${uid}" name="msg" rows="4" class="${css}input ${css}textarea"></textarea>
+                </div>
+            ` : '';
+
+            const formHtml = `
+                <form id="form_${uid}" class="${css}form" novalidate>
+                    ${hiddenFields}
+                    <div class="${css}field">
+                        <label for="nome_${uid}" class="${css}label">Nome Completo *</label>
+                        <input type="text" id="nome_${uid}" name="nome" required class="${css}input">
+                    </div>
+                    <div class="${css}row">
+                        <div class="${css}col">
+                            <label for="email_${uid}" class="${css}label">E-mail *</label>
+                            <input type="email" id="email_${uid}" name="email" required class="${css}input">
+                        </div>
+                        <div class="${css}col">
+                            <label for="telefone_${uid}" class="${css}label">Telefone *</label>
+                            <input type="tel" id="telefone_${uid}" name="telefone" required class="${css}input">
+                        </div>
+                    </div>
+                    ${nascimentoHtml}
+                    ${checkboxesHtml}
+                    ${mensagemHtml}
+                    <button type="submit" id="submit_${uid}" class="${css}button">${opts.textoBotao}</button>
+                    <div id="resposta_${uid}" class="${css}resposta"></div>
+                </form>
+            `;
+
+            this.container.innerHTML = formHtml;
+
+            // Referências
+            this.form = document.getElementById(`form_${uid}`);
+            this.submitBtn = document.getElementById(`submit_${uid}`);
+            this.resposta = document.getElementById(`resposta_${uid}`);
+            this.dataHoraInput = document.getElementById(`dataHora_${uid}`);
+        }
+
+        // ---------- Eventos ----------
+        initEvents() {
+            // Máscara de telefone
+            const telInput = this.form.querySelector('input[name="telefone"]');
+            if (telInput) {
+                telInput.addEventListener('input', (e) => {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 11) value = value.substring(0, 11);
+                    if (value.length > 0) {
+                        value = value.replace(/^(\d{0,2})(\d{0,5})(\d{0,4}).*/, '($1) $2-$3');
+                    }
+                    e.target.value = value;
+                });
+            }
+
+            // Validação de data
+            const dateInput = this.form.querySelector('input[type="date"]');
+            if (dateInput && this.opts.mostrarDataNasc) {
+                dateInput.addEventListener('change', (e) => {
+                    const selected = new Date(e.target.value);
+                    const today = new Date();
+                    if (selected > today) {
+                        this.mostrarNotificacao('error', 'Data de nascimento não pode ser no futuro', 'Erro!');
+                        e.target.value = '';
+                    }
+                });
+            }
+
+            // Envio
+            this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        }
+
+        // ---------- VALIDAÇÃO MANUAL DOS CAMPOS OBRIGATÓRIOS ----------
+        validarCampos() {
+            // Define quais campos são obrigatórios conforme as opções
+            const obrigatorios = ['nome', 'email', 'telefone'];
+            
+            // Se quiser tornar a data obrigatória, descomente a linha abaixo:
+            // if (this.opts.mostrarDataNasc) obrigatorios.push('nascimento');
+
+            let valido = true;
+            const css = 'formsenderCSS_';
+
+            for (const campo of obrigatorios) {
+                const input = this.form.querySelector(`[name="${campo}"]`);
+                if (input) {
+                    // Remove espaços e verifica se está vazio
+                    if (!input.value.trim()) {
+                        input.classList.add(`${css}input_error`);
+                        valido = false;
+                    } else {
+                        input.classList.remove(`${css}input_error`);
+                    }
+                }
+            }
+            return valido;
+        }
+
+        // ---------- Envio com validação ----------
+        handleSubmit(e) {
+            e.preventDefault();
+
+            // 1. VALIDA OS CAMPOS
+            if (!this.validarCampos()) {
+                this.mostrarNotificacao('error', 'Preencha todos os campos obrigatórios.', 'Atenção!');
+                return; // Não envia
+            }
+
+            // 2. DESABILITA BOTÃO
+            this.submitBtn.disabled = true;
+            const originalText = this.submitBtn.textContent;
+            this.submitBtn.textContent = 'Enviando...';
+
+            // 3. PREENCHE DATA/HORA
+            if (this.dataHoraInput) {
+                this.dataHoraInput.value = new Date().toLocaleString('pt-BR');
+            }
+
+            const formData = new FormData(this.form);
+
+            // 4. ENVIA
+            fetch(this.opts.endpoint, {
+                method: 'POST',
+                body: formData,
+            })
+                .then(response => response.text())
+                .then(msg => {
+                    this.resposta.innerText = msg;
+                    this.resposta.className = 'formsenderCSS_resposta formsenderCSS_success';
+                    this.mostrarNotificacao('success', 'Mensagem enviada com sucesso!', 'Sucesso!');
+                    this.form.reset();
+                    if (this.opts.onSuccess) this.opts.onSuccess(msg);
+                })
+                .catch(err => {
+                    this.resposta.innerText = 'Erro ao enviar dados. Por favor, tente novamente.';
+                    this.resposta.className = 'formsenderCSS_resposta formsenderCSS_error';
+                    this.mostrarNotificacao('error', 'Erro no envio. Tente novamente.', 'Erro!');
+                    console.error(err);
+                    if (this.opts.onError) this.opts.onError(err);
+                })
+                .finally(() => {
+                    this.submitBtn.disabled = false;
+                    this.submitBtn.textContent = originalText;
+                    setTimeout(() => {
+                        this.resposta.innerText = '';
+                        this.resposta.className = 'formsenderCSS_resposta';
+                    }, 3000);
+                });
+        }
+
+        // ---------- Sistema de notificação (integrado ao notify-send) ----------
+        mostrarNotificacao(tipo, mensagem, titulo) {
+            // 1. Se o usuário forneceu uma função personalizada, usa ela
+            if (typeof this.opts.notificacao === 'function') {
+                this.opts.notificacao(tipo, mensagem, titulo);
+                return;
+            }
+
+            // 2. Se o notify-send estiver disponível, usa-o
+            if (typeof window.notify_Send_notification === 'function') {
+                const avatar = (tipo === 'success')
+                    ? 'https://randomuser.me/api/portraits/men/32.jpg'
+                    : 'fas fa-exclamation-triangle';
+                window.notify_Send_notification(tipo, mensagem, titulo, avatar);
+                return;
+            }
+
+            // 3. Fallback para showfeedview_notification
+            if (typeof window.showfeedview_notification === 'function') {
+                window.showfeedview_notification(tipo, mensagem, titulo);
+                return;
+            }
+
+            // 4. Último recurso: alert simples
+            alert(`${titulo}: ${mensagem}`);
+        }
+    }
+
+    // Exporta a classe no namespace
+    window.formsenderJS.Plugin = FormPlugin;
+
+    //console.log(' formsenderJS.Plugin carregado com sucesso!');
+    //console.log(' Uso: new formsenderJS.Plugin("#seletor", { ... });');
+})();
+
+(function () {
+  'use strict';
+function configureFixedBackgrounds(){document.querySelectorAll('.formsenderV4_section[data-fixed-background="true"]').forEach(function(el){var url=el.dataset.backgroundImage||'';if(/^https:\/\//i.test(url)){el.style.setProperty('--sender-fixed-image','url('+JSON.stringify(url)+')')}else{el.style.removeProperty('--sender-fixed-image')}})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',configureFixedBackgrounds);else configureFixedBackgrounds();
+
+
+  function enabled(value) {
+    return value === 'true' || value === '1' || value === 'on';
+  }
+
+
+
+  function quickQuestion(mount, index) {
+    var prefix = 'quickQ' + index;
+    var key = prefix.charAt(0).toLowerCase() + prefix.slice(1);
+    function ds(suffix) { return mount.dataset[key + suffix] || ''; }
+    var type = ds('Type') || 'single';
+    var options = ds('Options').split('|').map(function (item) { return item.trim(); }).filter(Boolean);
+    if (type === 'yesno') options = ['Sim', 'Não'];
+    if (type === 'truefalse') options = ['Verdadeiro', 'Falso'];
+    return {
+      enabled: enabled(ds('Enabled')),
+      label: ds('Label') || ('Pergunta ' + index),
+      type: type,
+      options: options,
+      required: true
+    };
+  }
+
+  function applyPossibilitySummary(mount, explicitSummary) {
+    var summary = String(explicitSummary || '');
+    if (!summary) { try { summary = sessionStorage.getItem('imobify:possibility-path-summary') || ''; } catch (_) {} }
+    if (!summary) return;
+    var form = mount && mount.querySelector('form');
+    if (!form) return;
+    var msg = form.querySelector('textarea[name="msg"]');
+    if (msg && !msg.value.trim()) msg.value = summary;
+    var hidden = form.querySelector('input[name="diagnosticoPossibilidade"]');
+    if (!hidden) { hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.name = 'diagnosticoPossibilidade'; form.appendChild(hidden); }
+    hidden.value = summary;
+  }
+
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+
+  function openQuickComplement(instance, config) {
+    return new Promise(function (resolve) {
+      var questions = (config.questions || []).filter(function (q) { return q && q.enabled !== false && q.label; });
+      if (!questions.length) { resolve([]); return; }
+      var old = document.getElementById('quick_' + instance.uid); if (old) old.remove();
+      function choices(q) {
+        if (q.type === 'yesno') return ['Sim','Não'];
+        if (q.type === 'truefalse') return ['Verdadeiro','Falso'];
+        return Array.isArray(q.options) ? q.options : [];
+      }
+      var overlay = document.createElement('div');
+      overlay.id = 'quick_' + instance.uid;
+      overlay.className = 'formsenderCSS_quick-overlay';
+      overlay.setAttribute('role','dialog'); overlay.setAttribute('aria-modal','true');
+      overlay.innerHTML = '<div class="formsenderCSS_quick-card">' +
+        '<div class="formsenderCSS_quick-head"><span class="formsenderCSS_quick-kicker">Só mais um detalhe</span>' +
+        '<h3>' + escapeHtml(config.title || 'Antes de finalizar, só me confirma rapidinho…') + '</h3>' +
+        (config.copy ? '<p>' + escapeHtml(config.copy) + '</p>' : '') + '</div>' +
+        (questions.length > 1 ? '<div class="formsenderCSS_quick-progress" aria-live="polite"><span data-quick-current>1</span> de ' + questions.length + '</div>' : '') +
+        '<div class="formsenderCSS_quick-questions">' + questions.map(function (q, i) {
+          return '<fieldset class="formsenderCSS_quick-question' + (i === 0 ? ' is-active' : '') + '" data-quick-question="' + i + '">' +
+            '<legend>' + escapeHtml(q.label) + ' *</legend>' +
+            '<div class="formsenderCSS_quick-options">' + choices(q).map(function (option) {
+              return '<button type="button" class="formsenderCSS_quick-option" data-value="' + escapeHtml(option) + '">' + escapeHtml(option) + '</button>';
+            }).join('') + '</div><small>Selecione uma opção para continuar.</small></fieldset>';
+        }).join('') + '</div>' +
+        '<div class="formsenderCSS_quick-actions">' +
+        '<button type="button" class="formsenderCSS_quick-confirm">' + escapeHtml(config.confirmText || 'Concluir envio') + '</button></div></div>';
+      document.body.appendChild(overlay);
+      document.documentElement.classList.add('formsender-quick-open');
+      requestAnimationFrame(function () { overlay.classList.add('is-open'); });
+      var selected = new Map();
+      var activeIndex = 0;
+      var isMobile = false;
+      try { isMobile = window.matchMedia ? window.matchMedia('(max-width: 640px)').matches : window.innerWidth <= 640; } catch (_) {}
+      var progressCurrent = overlay.querySelector('[data-quick-current]');
+      var questionsWrap = overlay.querySelector('.formsenderCSS_quick-questions');
+      var confirmButton = overlay.querySelector('.formsenderCSS_quick-confirm');
+      var quickCard = overlay.querySelector('.formsenderCSS_quick-card');
+      var fitRaf = 0;
+      var viewportResizeTarget = window.visualViewport || null;
+
+      function fitMobileCard() {
+        if (!isMobile || !quickCard) return;
+        if (fitRaf) cancelAnimationFrame(fitRaf);
+        fitRaf = requestAnimationFrame(function () {
+          fitRaf = 0;
+          var vw = viewportResizeTarget ? viewportResizeTarget.width : window.innerWidth;
+          var vh = viewportResizeTarget ? viewportResizeTarget.height : window.innerHeight;
+          var naturalWidth = Math.max(1, quickCard.offsetWidth);
+          var naturalHeight = Math.max(1, quickCard.scrollHeight);
+          overlay.style.setProperty('--formsender-vv-width', Math.round(vw) + 'px');
+          overlay.style.setProperty('--formsender-vv-height', Math.round(vh) + 'px');
+          var availableWidth = Math.max(1, vw - 24);
+          var availableHeight = Math.max(1, vh - 24);
+          var scale = Math.min(1, availableWidth / naturalWidth, availableHeight / naturalHeight);
+          if (!isFinite(scale) || scale <= 0) scale = 1;
+          quickCard.style.setProperty('--formsender-mobile-scale', String(Math.max(.55, scale)));
+        });
+      }
+
+      function currentNode(index) { return overlay.querySelector('[data-quick-question="' + index + '"]'); }
+      function currentAnswer(index) {
+        var raw = selected.get(index);
+        return Array.isArray(raw) ? raw.join(', ') : (raw || '');
+      }
+      function updateMobileHeight() {
+        if (!isMobile || !questionsWrap) return;
+        /* A pergunta ativa permanece no fluxo normal. Não fixamos a altura do wrapper:
+           isso evita que opções maiores que a etapa anterior vazem para fora do card. */
+        questionsWrap.style.removeProperty('height');
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () { fitMobileCard(); });
+        });
+      }
+      function updateActionLabel() {
+        if (!confirmButton) return;
+        if (!isMobile) {
+          confirmButton.hidden = false;
+          confirmButton.textContent = config.confirmText || 'Concluir envio';
+          overlay.classList.add('has-mobile-action');
+          return;
+        }
+        var q = questions[activeIndex];
+        var needsAction = q && (q.type || 'single') === 'multiple';
+        confirmButton.hidden = !needsAction;
+        overlay.classList.toggle('has-mobile-action', !!needsAction);
+        if (needsAction) confirmButton.textContent = activeIndex < questions.length - 1 ? 'Concluir seleção' : (config.confirmText || 'Concluir envio');
+      }
+      function showStep(nextIndex, immediate) {
+        if (!isMobile) return;
+        nextIndex = Math.max(0, Math.min(questions.length - 1, nextIndex));
+        var oldNode = currentNode(activeIndex);
+        var newNode = currentNode(nextIndex);
+        if (!newNode || nextIndex === activeIndex) { updateMobileHeight(); updateActionLabel(); return; }
+        function activate() {
+          if (oldNode) oldNode.classList.remove('is-active','is-leaving');
+          activeIndex = nextIndex;
+          newNode.classList.add('is-active');
+          if (progressCurrent) progressCurrent.textContent = String(activeIndex + 1);
+          updateActionLabel();
+          updateMobileHeight();
+          requestAnimationFrame(function () { newNode.classList.add('is-entered'); });
+          setTimeout(function () { newNode.classList.remove('is-entered'); }, 220);
+        }
+        if (immediate || !oldNode) activate();
+        else {
+          oldNode.classList.add('is-leaving');
+          setTimeout(activate, 140);
+        }
+      }
+      function validateIndex(index) {
+        var q = questions[index];
+        var answer = currentAnswer(index);
+        var node = currentNode(index);
+        if (q && !answer) { if (node) node.classList.add('has-error'); return false; }
+        if (node) node.classList.remove('has-error');
+        return true;
+      }
+      function collectAnswers() {
+        var valid = true;
+        var answers = questions.map(function (q, index) {
+          var answer = currentAnswer(index);
+          if (!answer) { valid = false; var node = currentNode(index); if (node) node.classList.add('has-error'); }
+          return { label:q.label, answer:answer };
+        });
+        return { valid:valid, answers:answers };
+      }
+      function cleanup() {
+        document.documentElement.classList.remove('formsender-quick-open');
+        if (fitRaf) cancelAnimationFrame(fitRaf);
+        window.removeEventListener('resize', fitMobileCard);
+        window.removeEventListener('orientationchange', fitMobileCard);
+        if (viewportResizeTarget && viewportResizeTarget.removeEventListener) viewportResizeTarget.removeEventListener('resize', fitMobileCard);
+        document.removeEventListener('keydown', blockEscape, true);
+        overlay.classList.add('is-closing');
+        setTimeout(function () { overlay.remove(); }, 180);
+      }
+      function finish(answers) {
+        cleanup();
+        resolve({ cancelled:false, answers:answers || [] });
+      }
+
+      overlay.querySelectorAll('.formsenderCSS_quick-option').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var fieldset = button.closest('[data-quick-question]');
+          var index = Number(fieldset.dataset.quickQuestion); var q = questions[index]; var value = button.dataset.value || '';
+          if ((q.type || 'single') === 'multiple') {
+            var values = selected.get(index) || [];
+            var next = values.indexOf(value) >= 0 ? values.filter(function (v) { return v !== value; }) : values.concat([value]);
+            selected.set(index, next); button.classList.toggle('is-selected', next.indexOf(value) >= 0);
+          } else {
+            selected.set(index, value);
+            fieldset.querySelectorAll('.formsenderCSS_quick-option').forEach(function (el) { el.classList.toggle('is-selected', el === button); });
+          }
+          fieldset.classList.remove('has-error');
+          if (isMobile && (q.type || 'single') !== 'multiple' && index === activeIndex) {
+            if (index < questions.length - 1) {
+              setTimeout(function () { showStep(index + 1, false); }, 110);
+            } else {
+              setTimeout(function () {
+                var result = collectAnswers();
+                if (result.valid) finish(result.answers);
+              }, 110);
+            }
+          }
+        });
+      });
+
+      confirmButton.addEventListener('click', function () {
+        if (isMobile) {
+          var currentQuestion = questions[activeIndex];
+          if (!currentQuestion || (currentQuestion.type || 'single') !== 'multiple') return;
+          if (!validateIndex(activeIndex)) return;
+          if (activeIndex < questions.length - 1) {
+            showStep(activeIndex + 1, false);
+            return;
+          }
+        }
+        var result = collectAnswers();
+        if (result.valid) finish(result.answers);
+        else if (isMobile) {
+          var firstInvalid = questions.findIndex(function (q, index) { return !currentAnswer(index); });
+          if (firstInvalid >= 0) showStep(firstInvalid, true);
+        }
+      });
+      overlay.addEventListener('click', function (event) {
+        if (event.target === overlay) {
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      });
+      function blockEscape(event) {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+      }
+      document.addEventListener('keydown', blockEscape, true);
+
+      if (isMobile) {
+        overlay.classList.add('is-mobile-steps');
+        updateActionLabel();
+        updateMobileHeight();
+        window.addEventListener('resize', fitMobileCard, { passive:true });
+        window.addEventListener('orientationchange', fitMobileCard, { passive:true });
+        if (viewportResizeTarget && viewportResizeTarget.addEventListener) viewportResizeTarget.addEventListener('resize', fitMobileCard, { passive:true });
+        setTimeout(fitMobileCard, 40);
+      }
+    });
+  }
+
+  function appendQuickAnswers(instance, answers) {
+    var answered = (answers || []).filter(function (item) { return item && String(item.answer || '').trim(); });
+    if (!answered.length) return;
+    var block = answered.map(function (item) { return item.label + '\n' + item.answer + ';'; }).join('\n\n');
+    var form = instance.form; if (!form) return;
+    var msg = form.querySelector('[name="msg"]');
+    if (!msg) { msg = document.createElement('input'); msg.type = 'hidden'; msg.name = 'msg'; form.appendChild(msg); }
+    var original = String(msg.value || '').trim();
+    msg.value = [original, 'Informações complementares:', block].filter(Boolean).join('\n\n');
+    var hidden = form.querySelector('[name="complementacaoRapida"]');
+    if (!hidden) { hidden = document.createElement('input'); hidden.type='hidden'; hidden.name='complementacaoRapida'; form.appendChild(hidden); }
+    hidden.value = block;
+    answered.forEach(function (item, index) {
+      var input = form.querySelector('[name="qualificacao_' + (index+1) + '"]');
+      if (!input) { input=document.createElement('input'); input.type='hidden'; input.name='qualificacao_' + (index+1); form.appendChild(input); }
+      input.value = item.label + '\n' + item.answer + ';';
+    });
+  }
+
+  function installQuickComplement(instance, config) {
+    if (!instance || !config) return;
+    var original = instance.handleSubmit.bind(instance);
+    var opening = false;
+    instance.handleSubmit = function (event) {
+      if (opening) { event && event.preventDefault && event.preventDefault(); return; }
+      event && event.preventDefault && event.preventDefault();
+      if (!instance.validarCampos()) { instance.mostrarNotificacao('error','Preencha todos os campos obrigatórios.','Atenção!'); return; }
+      opening = true;
+      window.ImobifyFinancialFlow.launch(config.financial || {}).then(function (financeAnswers) {
+        window.ImobifyFinancialFlow.addToForm(instance.form, financeAnswers);
+        return (config.enabled && (config.questions || []).length) ? openQuickComplement(instance, config) : [];
+      }).then(function (result) {
+        if (result && result.cancelled) { opening = false; return; }
+        var answers = result && Array.isArray(result.answers) ? result.answers : (Array.isArray(result) ? result : []);
+        appendQuickAnswers(instance, answers);
+        opening = false;
+        original({ preventDefault:function () {} });
+      }).catch(function () { opening = false; });
+    };
+  }
+
+  function configureAutocomplete(instance, shouldEnable) {
+    if (!instance || !instance.form) return;
+    var fields = [
+      { name:'nome', token:'name', extra:{ autocapitalize:'words' } },
+      { name:'email', token:'email', extra:{ inputmode:'email', autocapitalize:'none', spellcheck:'false' } },
+      { name:'telefone', token:'tel', extra:{ inputmode:'tel' } }
+    ];
+    fields.forEach(function (item) {
+      var input = instance.form.querySelector('[name="' + item.name + '"]');
+      if (!input) return;
+      input.setAttribute('autocomplete', shouldEnable ? item.token : 'off');
+      Object.keys(item.extra || {}).forEach(function (key) { input.setAttribute(key, item.extra[key]); });
+    });
+    instance.form.setAttribute('autocomplete', shouldEnable ? 'on' : 'off');
+  }
+
+  function initialize() {
+    document.querySelectorAll('[data-plugin="form-sender-v4"] .formsenderV4_mount:not([data-initialized])').forEach(function (mount, index) {
+      mount.dataset.initialized = 'true';
+      mount.id = mount.id || 'formsender-v4-' + Date.now() + '-' + index + '-' + Math.random().toString(36).slice(2, 7);
+
+      if (!window.formsenderJS || typeof window.formsenderJS.Plugin !== 'function') {
+        mount.innerHTML = '<p>Não foi possível inicializar o Form.v4.</p>';
+        return;
+      }
+
+      var endpoint = 'https://script.google.com/macros/s/AKfycbxxA_8OOrK8oSJk6dFSC4bSvIHxICKLYG6ZpalORyFnM5fe-I4eLil-KGsKyoD31NMWlg/exec';
+      if (!endpoint) {
+        mount.innerHTML = '<p>Configure o endpoint do Form.v4 no editor.</p>';
+        return;
+      }
+
+      if (window.__IMOBIFY_EDITOR__) {
+        mount.addEventListener('submit', function (event) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }, true);
+      }
+
+      try {
+        var quickConfig = {
+          enabled: enabled(mount.dataset.quickComplement),
+          title: mount.dataset.quickTitle || 'Antes de finalizar, só me confirma rapidinho…',
+          copy: mount.dataset.quickCopy || '',
+          confirmText: mount.dataset.quickConfirmText || 'Concluir envio',
+          financial: mount.closest(".formsenderV4_section").dataset,
+          questions: [quickQuestion(mount, 1), quickQuestion(mount, 2), quickQuestion(mount, 3), quickQuestion(mount, 4)].filter(function (q) { return q.enabled; })
+        };
+        var instance = new window.formsenderJS.Plugin('#' + mount.id, {
+          produto: mount.dataset.product || 'The Garden - New Edition',
+          endpoint: endpoint,
+          textoBotao: mount.dataset.buttonText || 'Enviar Mensagem',
+          mostrarMensagem: enabled(mount.dataset.showMessage),
+          mostrarCheckboxes: enabled(mount.dataset.showCheckboxes),
+          mostrarDataNasc: enabled(mount.dataset.showBirthdate),
+          notificacao: function (type, message, title) {
+            if (type === 'success') return;
+            if (typeof window.notify_Send_notification === 'function') {
+              window.notify_Send_notification(type, message, title, 'fas fa-exclamation-triangle');
+            } else {
+              window.alert(title + ': ' + message);
+            }
+          },
+          onSuccess: function () {
+            if (typeof window.notify_Send_notification === 'function') {
+              window.notify_Send_notification(
+                'success',
+                mount.dataset.successMessage || 'Nosso consultor entrará em contato!',
+                mount.dataset.successTitle || 'Fique atento',
+                mount.dataset.successAvatar || ''
+              );
+            }
+          },
+          onError: function (error) {
+            console.warn('[Form.v4]', error);
+          }
+        });
+        mount.formsenderV4 = instance;
+        configureAutocomplete(instance, enabled(mount.dataset.fieldAutocomplete));
+        installQuickComplement(instance, quickConfig);
+        applyPossibilitySummary(mount);
+      } catch (error) {
+        console.error('[Form.v4]', error);
+        mount.innerHTML = '<p>Erro ao carregar o formulário: ' + String(error.message || error) + '</p>';
+      }
+    });
+  }
+
+  window.addEventListener('imobify:possibility-path-complete', function (event) { document.querySelectorAll('[data-plugin="form-sender-v4"] .formsenderV4_mount').forEach(function (mount) { applyPossibilitySummary(mount, event.detail && event.detail.summary); }); });
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize);
+  else initialize();
 })();
 
 

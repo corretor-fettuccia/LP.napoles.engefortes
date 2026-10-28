@@ -100,16 +100,6 @@
     "packageType": "core"
   },
   {
-    "id": "agendamento-sender",
-    "name": "Agendamento Sender",
-    "type": "section",
-    "compositionRole": "both",
-    "compositionCardinality": "multiple",
-    "version": "1.4.0",
-    "source": "plugins/agendamento-sender/plugin.json",
-    "packageType": "bundled"
-  },
-  {
     "id": "anti-ia-copy-policy",
     "name": "Anti-IA Copy — Política de uso",
     "type": "section",
@@ -117,6 +107,16 @@
     "compositionCardinality": "multiple",
     "version": "1.0.0",
     "source": "plugins/anti-ia-copy/plugin.json",
+    "packageType": "bundled"
+  },
+  {
+    "id": "form-sender-v4",
+    "name": "Form Sender v4",
+    "type": "section",
+    "compositionRole": "both",
+    "compositionCardinality": "multiple",
+    "version": "4.5.0",
+    "source": "plugins/form-sender-v4/plugin.json",
     "packageType": "bundled"
   },
   {

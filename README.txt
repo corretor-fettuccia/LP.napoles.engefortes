@@ -1,7 +1,7 @@
 LANDING PAGE COMPILADA — IMOBIFY STUDIO 7.0.0
 
 Projeto: Nápoles Clube Residencial | Estância Velha | Canoas
-Gerado em: 27/10/2026, 18:19:21
+Gerado em: 28/10/2026, 00:56:01
 
 PUBLICAÇÃO
 Envie todo o conteúdo desta pasta para a raiz do seu serviço de hospedagem, GitHub Pages, Netlify, Vercel ou servidor web. A página é estática e não exige banco de dados.
@@ -16,10 +16,11 @@ FORMULÁRIOS E CONTATO
 Os formulários e CTAs usam as integrações configuradas no editor. O Form.v4 mantém o endpoint, a validação e as notificações do componente original.
 
 MÍDIA INCLUÍDA
+icon.png
 share.webp
 assets/images/hero-image-1.webp
-assets/images/smart-plant-plant-1-image-2.png
-assets/images/smart-plant-plant-2-image-3.png
+assets/images/smart-plant-plant-1-image-2.webp
+assets/images/smart-plant-plant-2-image-3.webp
 assets/images/image-single-image-4.webp
 assets/images/property-slider-image2-5.webp
 assets/images/property-slider-slide-4-image-6.webp
