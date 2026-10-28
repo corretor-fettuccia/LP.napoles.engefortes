@@ -1,12 +1,12 @@
 [
   {
-    "id": "hero",
-    "name": "Hero imobiliário",
+    "id": "hero-plus",
+    "name": "Hero Imobiliário Plus",
     "type": "section",
     "compositionRole": "section",
     "compositionCardinality": "multiple",
     "version": "1.0.0",
-    "source": "plugins/hero/plugin.json",
+    "source": "plugins/hero-plus/plugin.json",
     "packageType": "core"
   },
   {
@@ -48,6 +48,16 @@
     "version": "1.0.0",
     "source": "plugins/payment/plugin.json",
     "packageType": "core"
+  },
+  {
+    "id": "button-single",
+    "name": "Botão",
+    "type": "section",
+    "compositionRole": "both",
+    "compositionCardinality": "single",
+    "version": "1.0.0",
+    "source": "plugins/button-single/plugin.json",
+    "packageType": "bundled"
   },
   {
     "id": "benefits-showcase",

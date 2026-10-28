@@ -6,8 +6,10 @@
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
     <image:image><image:loc>https://napoles.mcmv-rs.com.br/share.webp</image:loc></image:image>
-    <image:image><image:loc>https://napoles.mcmv-rs.com.br/assets/images/hero-image-1.webp</image:loc></image:image>
-    <image:image><image:loc>https://napoles.mcmv-rs.com.br/assets/images/image-single-image-4.webp</image:loc></image:image>
-    <image:image><image:loc>https://napoles.mcmv-rs.com.br/assets/images/property-slider-image2-5.webp</image:loc></image:image>
+    <image:image><image:loc>https://napoles.mcmv-rs.com.br/assets/images/hero-plus-image1-1.webp</image:loc></image:image>
+    <image:image><image:loc>https://napoles.mcmv-rs.com.br/assets/images/hero-plus-image3-2.webp</image:loc></image:image>
+    <image:image><image:loc>https://napoles.mcmv-rs.com.br/assets/images/hero-plus-image4-3.webp</image:loc></image:image>
+    <image:image><image:loc>https://napoles.mcmv-rs.com.br/assets/images/image-single-image-6.webp</image:loc></image:image>
+    <image:image><image:loc>https://napoles.mcmv-rs.com.br/assets/images/property-slider-image2-7.webp</image:loc></image:image>
   </url>
 </urlset>
